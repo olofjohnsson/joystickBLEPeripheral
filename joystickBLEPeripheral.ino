@@ -19,6 +19,13 @@ bool stateChanged = false;
 bool button_2_State = false;  
 bool button_3_State = false; 
 bool button_4_State = false; 
+bool turningDirection = false; //Default direction is left
+bool runningDirection = false;//Default is forward
+
+int x_readingRaw = 0;
+int y_readingRaw = 0;
+int x_reading = 0;
+int y_reading = 0;
 
  // Bluetooth® Low Energy Battery Service
 BLEService batteryService("180F");
@@ -33,6 +40,8 @@ BLEUnsignedIntCharacteristic y_readingChar("76ad7aa2-3782-11ed-a261-0242ac120002
 BLEBooleanCharacteristic button2Char("76ad7aa3-3782-11ed-a261-0242ac120002", BLERead | BLENotify);
 BLEBooleanCharacteristic button3Char("76ad7aa4-3782-11ed-a261-0242ac120002", BLERead | BLENotify);
 BLEBooleanCharacteristic button4Char("76ad7aa5-3782-11ed-a261-0242ac120002", BLERead | BLENotify);
+BLEBooleanCharacteristic turningDirectionChar("76ad7aa6-3782-11ed-a261-0242ac120002", BLERead | BLENotify);
+BLEBooleanCharacteristic runningDirectionChar("76ad7aa7-3782-11ed-a261-0242ac120002", BLERead | BLENotify);
 
 int x_prevReading = 0;  // last battery level reading from analog input
 int y_prevReading = 0;  // last battery level reading from analog input
@@ -74,6 +83,8 @@ void setup() {
   joystickService.addCharacteristic(button2Char);
   joystickService.addCharacteristic(button3Char);
   joystickService.addCharacteristic(button4Char);
+  joystickService.addCharacteristic(turningDirectionChar);
+  joystickService.addCharacteristic(runningDirectionChar);
   BLE.addService(joystickService); // Add the joystick service
   
   batteryLevelChar.writeValue(x_prevReading); // set initial value for this characteristic
@@ -128,29 +139,65 @@ void printButtonState()
   stateChanged = false;
 }
 
+void printDirectionState()
+{
+  Serial.print("runningDirection: ");
+  Serial.println(runningDirection);
+  runningDirectionChar.writeValue(runningDirection);
+
+  Serial.print("turningDirection: ");
+  Serial.println(turningDirection);
+  turningDirectionChar.writeValue(turningDirection);
+}
+
 void updateAnalogReading() {
   
   /* Read the current voltage level on the A0, A1 analog input pins.
      This is used here to read Joystick pot values
   */
-  int x_readingRaw = analogRead(A0);
-  int y_readingRaw = analogRead(A2);
-  int x_reading = map(x_readingRaw, 0, 1023, 0, 100);
-  int y_reading = map(y_readingRaw, 0, 1023, 0, 100);
+  x_readingRaw = analogRead(A0);
+  y_readingRaw = analogRead(A2);
+  if (x_readingRaw < 512)
+  {
+    x_reading = map(x_readingRaw, 0, 511, 0, 255);
+    turningDirection = false;
+  }
+  if (x_readingRaw > 511)
+  {
+    x_reading = map(x_readingRaw, 512, 1024, 0, 255);
+    turningDirection = true;
+  }
+
+  if (y_readingRaw < 512)
+  {
+    y_reading = map(x_readingRaw, 0, 511, 0, 255);
+    runningDirection = false;
+  }
+  if (y_readingRaw > 511)
+  {
+    y_reading = map(x_readingRaw, 512, 1024, 0, 255);
+    runningDirection = true;
+  }
 
   if (abs(x_reading-x_prevReading)>UPDATE_THRESH) // if the analog reading level has changed beyond preset threshold
-  {      
-    Serial.print("x_reading: "); // print it
-    Serial.println(x_reading);
-    x_readingChar.writeValue((byte)x_reading);  // and update the characteristic
-    x_prevReading = x_reading;           // save the level for next comparison
-  }
+    {      
+      Serial.print("x_reading: "); // print it
+      Serial.println(x_reading);
+      Serial.print("turningDirection: ");
+      Serial.println(turningDirection);
+      x_readingChar.writeValue((byte)x_reading);  // and update the characteristic
+      turningDirectionChar.writeValue(turningDirection);
+      x_prevReading = x_reading;           // save the level for next comparison
+    }
   
   if (abs(y_reading-y_prevReading)>UPDATE_THRESH) // if the analog reading level has changed beyond preset threshold
   {      
     Serial.print("y_reading: "); // print it
     Serial.println(y_reading);
+    Serial.print("runningDirection: ");
+    Serial.println(runningDirection);
     y_readingChar.writeValue((byte)y_reading); // Update characteristic
+    runningDirectionChar.writeValue(turningDirection);
     y_prevReading = y_reading;           // save the level for next comparison
   }
 }
