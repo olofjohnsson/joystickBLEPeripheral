@@ -3,7 +3,7 @@
 */
 
 #include <ArduinoBLE.h>
-#define UPDATE_THRESH 15
+#define UPDATE_THRESH 0
 #define UPDATE_INTERVAL 10
 
 #define UUID_Service 76ad7aaa-3782-11ed-a261-0242ac120002
@@ -50,6 +50,7 @@ int y_prevReading = 0;  // last battery level reading from analog input
 long previousMillis = 0;  // last time the analog reading, in ms
 
 void setup() {
+  BLE.setConnectionInterval(0x0006, 0x0006);
   Serial.begin(9600);    // initialize serial communication
   //while (!Serial);
 
@@ -161,7 +162,7 @@ void updateAnalogReading() {
   */
   x_readingRaw = analogRead(A0);
   y_readingRaw = analogRead(A2);
-  if (x_readingRaw < 490)
+  if (x_readingRaw < 511)
   {
     x_reading = map(x_readingRaw, 0, 511, 255, 0);
     if (x_reading > 15)
@@ -169,7 +170,7 @@ void updateAnalogReading() {
       turningDirection = 0;
     }
   }
-  if (x_readingRaw > 530)
+  if (x_readingRaw > 511)
   {
     x_reading = map(x_readingRaw, 512, 1024, 0, 255);
     if (x_reading > 15)
@@ -178,7 +179,7 @@ void updateAnalogReading() {
     }
   }
 
-  if (y_readingRaw < 490)
+  if (y_readingRaw < 511)
   {
     y_reading = map(y_readingRaw, 0, 511, 255, 0);
     if (y_reading > 15)
@@ -186,7 +187,7 @@ void updateAnalogReading() {
       runningDirection = 0;
     }
   }
-  if (y_readingRaw > 530)
+  if (y_readingRaw > 511)
   {
     y_reading = map(y_readingRaw, 512, 1024, 0, 255);
     if (y_reading > 15)
@@ -197,10 +198,10 @@ void updateAnalogReading() {
 
   if (abs(x_reading-x_prevReading)>UPDATE_THRESH) // if the analog reading level has changed beyond preset threshold
     {      
-      Serial.print("x_reading: "); // print it
-      Serial.println(x_reading);
-      Serial.print("turningDirection: ");
-      Serial.println((byte)turningDirection);
+//      Serial.print("x_reading: "); // print it
+//      Serial.println(x_reading);
+//      Serial.print("turningDirection: ");
+//      Serial.println((byte)turningDirection);
       x_readingChar.writeValue((byte)x_reading);  // and update the characteristic
       turningDirectionChar.writeValue((byte)turningDirection);
       x_prevReading = x_reading;           // save the level for next comparison
@@ -208,10 +209,10 @@ void updateAnalogReading() {
   
   if (abs(y_reading-y_prevReading)>UPDATE_THRESH) // if the analog reading level has changed beyond preset threshold
   {      
-    Serial.print("y_reading: "); // print it
-    Serial.println(y_reading);
-    Serial.print("runningDirection: ");
-    Serial.println((byte)runningDirection);
+//    Serial.print("y_reading: "); // print it
+//    Serial.println(y_reading);
+//    Serial.print("runningDirection: ");
+//    Serial.println((byte)runningDirection);
     y_readingChar.writeValue((byte)y_reading); // Update characteristic
     runningDirectionChar.writeValue((byte)runningDirection);
     y_prevReading = y_reading;           // save the level for next comparison
