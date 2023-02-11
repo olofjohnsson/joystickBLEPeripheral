@@ -2,6 +2,7 @@
   Read analog value and send over BLE on standard battery monitor characteristic
 */
 
+#include <Arduino.h>
 #include <ArduinoBLE.h>
 #define UPDATE_THRESH 0
 #define UPDATE_INTERVAL 10
@@ -48,6 +49,13 @@ BLEUnsignedIntCharacteristic runningDirectionChar("76ad7aa7-3782-11ed-a261-0242a
 int x_prevReading = 0;  // last battery level reading from analog input
 int y_prevReading = 0;  // last battery level reading from analog input
 long previousMillis = 0;  // last time the analog reading, in ms
+
+void setButton_2_State();
+void setButton_3_State();
+void setButton_4_State();
+void printButtonState();
+void printDirectionState();
+void updateAnalogReading();
 
 void setup() {
   BLE.setConnectionInterval(0x0006, 0x0006);
@@ -155,7 +163,8 @@ void printDirectionState()
   turningDirectionChar.writeValue(turningDirection);
 }
 
-void updateAnalogReading() {
+void updateAnalogReading() 
+{
   
   /* Read the current voltage level on the A0, A1 analog input pins.
      This is used here to read Joystick pot values
