@@ -173,7 +173,7 @@ void updateAnalogReading()
   y_readingRaw = analogRead(A2);
   if (x_readingRaw < 511)
   {
-    x_reading = map(x_readingRaw, 0, 511, 255, 0);
+    x_reading = map(x_readingRaw, 0, 511, 100, 0);
     if (x_reading > 15)
     {  
       turningDirection = 0;
@@ -181,7 +181,7 @@ void updateAnalogReading()
   }
   if (x_readingRaw > 511)
   {
-    x_reading = map(x_readingRaw, 512, 1024, 0, 255);
+    x_reading = map(x_readingRaw, 512, 1024, 0, 100);
     if (x_reading > 15)
     {  
       turningDirection = 1;
@@ -190,7 +190,7 @@ void updateAnalogReading()
 
   if (y_readingRaw < 511)
   {
-    y_reading = map(y_readingRaw, 0, 511, 255, 0);
+    y_reading = map(y_readingRaw, 0, 511, 100, 0);
     if (y_reading > 15)
     {  
       runningDirection = 0;
@@ -198,33 +198,35 @@ void updateAnalogReading()
   }
   if (y_readingRaw > 511)
   {
-    y_reading = map(y_readingRaw, 512, 1024, 0, 255);
+    y_reading = map(y_readingRaw, 512, 1024, 0, 100);
     if (y_reading > 15)
     {  
       runningDirection = 1;
     }
   }
-
+  if (x_reading > 90)
+  {
+    x_reading = 100;
+  }
+  if (y_reading > 90)
+  {
+    y_reading = 100;
+  }
+  Serial.print("x_reading: ");
+  Serial.println(x_reading);
   if (abs(x_reading-x_prevReading)>UPDATE_THRESH) // if the analog reading level has changed beyond preset threshold
     {      
-//      Serial.print("x_reading: "); // print it
-//      Serial.println(x_reading);
-//      Serial.print("turningDirection: ");
-//      Serial.println((byte)turningDirection);
       x_readingChar.writeValue((byte)x_reading);  // and update the characteristic
       turningDirectionChar.writeValue((byte)turningDirection);
       x_prevReading = x_reading;           // save the level for next comparison
     }
   
-  if (abs(y_reading-y_prevReading)>UPDATE_THRESH) // if the analog reading level has changed beyond preset threshold
+  if (abs(y_reading-y_prevReading)>UPDATE_THRESH)
   {      
-//    Serial.print("y_reading: "); // print it
-//    Serial.println(y_reading);
-//    Serial.print("runningDirection: ");
-//    Serial.println((byte)runningDirection);
     y_readingChar.writeValue((byte)y_reading); // Update characteristic
     runningDirectionChar.writeValue((byte)runningDirection);
-    y_prevReading = y_reading;           // save the level for next comparison
+    /* save the level for next comparison */
+    y_prevReading = y_reading;
   }
   x_reading = 0;
   y_reading = 0;
@@ -234,16 +236,13 @@ void loop() {
   // wait for a Bluetooth® Low Energy central
   BLEDevice central = BLE.central();
   
-  // if a central is connected to the peripheral:
+  /* if a central is connected to the peripheral: */
   if (central) {
     Serial.print("Connected to central: ");
-    // print the central's BT address:
+    /* print the central's BT address: */
     Serial.println(central.address());
-    // turn on the LED to indicate the connection:
-    digitalWrite(LED_BUILTIN, HIGH);
 
-    // check the battery level every 200ms
-    // while the central is connected:
+    /* update analog readings while the central is connected: */
     while (central.connected()) {
       updateAnalogReading();
       if (stateChanged == true)
@@ -252,8 +251,6 @@ void loop() {
         stateChanged = false;
       }
     }
-    // when the central disconnects, turn off the LED:
-    digitalWrite(LED_BUILTIN, LOW);
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());
   }
