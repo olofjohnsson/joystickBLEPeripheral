@@ -15,6 +15,9 @@
 #define BUTTON_3_PIN 3
 #define BUTTON_4_PIN 4
 
+#define X_VALUE_PIN A2
+#define Y_VALUE_PIN A0
+
 bool stateChanged = false;
 
 bool button_2_State = false;  
@@ -169,8 +172,8 @@ void updateAnalogReading()
   /* Read the current voltage level on the A0, A1 analog input pins.
      This is used here to read Joystick pot values
   */
-  x_readingRaw = analogRead(A0);
-  y_readingRaw = analogRead(A2);
+  x_readingRaw = analogRead(X_VALUE_PIN);
+  y_readingRaw = analogRead(Y_VALUE_PIN);
   if (x_readingRaw < 511)
   {
     x_reading = map(x_readingRaw, 0, 511, 100, 0);
